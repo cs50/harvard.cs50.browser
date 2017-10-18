@@ -174,7 +174,7 @@ define(function(require, exports, module) {
                 openBrowserTab({
                     name: "phpliteadmin-tab",
                     title: "phpliteadmin",
-                    path: db.path
+                    path: db.path.replace(/^\//, c9.workspaceDir + "/")
                 }, handleTabClose);
 
                 tree.tree.selection.selectNode(db, true);
@@ -212,7 +212,9 @@ define(function(require, exports, module) {
                 return;
 
             // spawn phpliteadmin
-            proc.spawn("phpliteadmin", { args: [path] }, function(err, process) {
+            proc.spawn("phpliteadmin", {
+                args: [ "--url-only", path ] },
+                function(err, process) {
                 if (err)
                     return callback(err);
 
