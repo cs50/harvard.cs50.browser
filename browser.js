@@ -281,10 +281,9 @@ define(function(require, exports, module) {
             var plugin = new Editor("CS50", main.consumes, extensions);
             var emit = plugin.getEmitter();
 
-            var loading = false;
-
             var container, iframe;
             var currDoc, currSession;
+            var timeout;
 
             // draw editor
             plugin.on("draw", function(e) {
@@ -325,50 +324,52 @@ define(function(require, exports, module) {
 
             function updateIframe(options) {
 
-                // prevent updating while we're updating
-                if (loading)
-                    return;
+                // reset onload handler
+                iframe.onload = function() {};
+
+                // reset iframe src
+                iframe.src = "about:blank";
 
                 // hide iframe
                 iframe.style.display = "none";
 
-                // if we're not just emptying iframe
-                if (options) {
+                if (!options)
+                    return;
 
-                    // show loading spinner
-                    handle.toggleLoadingSpinner(container, currDoc.tab, true);
+                // show loading spinner
+                handle.toggleLoadingSpinner(container, currDoc.tab, true);
 
-                    loading = true;
-                    iframe.onload = function () {
-
-                        // avoid triggering this infinitely since we may set src
-                        iframe.onload = function() {};
-
-                        // if url provided
-                        if (options.url) {
-                            currSession.url = options.url;
-                            iframe.src = options.url;
-                        }
-                        else if (options.content) {
-                            currSession.content = options.content;
-                            iframe.contentWindow.document.open();
-                            iframe.contentWindow.document.write(options.content);
-                            iframe.contentWindow.document.close();
-                        }
-
-                        // show iframe back
-                        iframe.style.display = "initial";
-
-                        // hide loading spinner
-                        handle.toggleLoadingSpinner(container, currDoc.tab, false);
-                        loading = false;
-                    }
+                // if url provided
+                if (options.url) {
+                    currSession.url = options.url;
+                    iframe.src = options.url;
                 }
 
-                iframe.src = "about:blank";
+                iframe.onload = function () {
+
+                    // avoid triggering this infinitely
+                    iframe.onload = function() {};
+
+                    // if SPL program
+                    if (options.content) {
+                        currSession.content = options.content;
+                        iframe.contentWindow.document.open();
+                        iframe.contentWindow.document.write(options.content);
+                        iframe.contentWindow.document.close();
+                    }
+
+                    // show iframe back
+                    iframe.style.display = "initial";
+
+                    // hide loading spinner
+                    handle.toggleLoadingSpinner(container, currDoc.tab, false);
+                }
             }
 
             plugin.on("documentLoad", function(e) {
+
+                // reset iframe
+                updateIframe();
 
                 // set current document and session
                 currDoc = e.doc;
@@ -378,11 +379,6 @@ define(function(require, exports, module) {
                 plugin.on("contentSet", function(content) {
                     updateIframe({ content: content })
                 });
-
-                // when iframe src should be set
-                plugin.on("urlSet", function (url) {
-                    updateIframe({ url: url });
-                })
 
                 /**
                  * Toggles editor's theme based on current skin.
@@ -469,6 +465,10 @@ define(function(require, exports, module) {
                     // show loading spinner
                     handle.toggleLoadingSpinner(container, currDoc.tab, true);
 
+                    // refrain from updating iframe if we're starting another phpliteadmin
+                    clearTimeout(timeout);
+                    updateIframe();
+
                     // start phpliteadmin
                     startPhpliteadmin(currSession.path, function(err, url, pid) {
                         if (err)
@@ -481,10 +481,10 @@ define(function(require, exports, module) {
                         currSession.pid = pid;
 
                         // give chance to server to start
-                        setTimeout(function() {
+                        timeout = setTimeout(function() {
 
-                            // notify about url change
-                            emit("urlSet", url);
+                            // reset iframe
+                            updateIframe({ url: url });
                         }, 1000);
                     });
                 }
