@@ -30,6 +30,10 @@ define(function(require, exports, module) {
 
         var extensions = ["db", "db3", "sqlite", "sqlite3"];
         var handle = editors.register("browser", "Browser", Browser, extensions);
+
+        /**
+         * adds Reload to tab context menu
+         */
         handle.addReloadItem = function() {
 
             // add "Reload" item once
@@ -65,6 +69,9 @@ define(function(require, exports, module) {
             });
         };
 
+        /**
+         * opens and reuses a Cloud9 tab for browser editor
+         */
         function openBrowserTab(options, onClose) {
             tabs.open({
                 name: options.name || "browser-tab",
@@ -81,6 +88,7 @@ define(function(require, exports, module) {
             }, onClose || function() {});
         }
 
+        // add c9 exec browser
         commands.addCommand({
             name: "browser",
             exec: function(args) {
@@ -102,26 +110,25 @@ define(function(require, exports, module) {
                     }, handleTabClose);
                 }
 
-                // open SDL programs in built-in browser tab
+                // open SPL programs in built-in browser tab
                 fs.readFile(args[1], function(err, data) {
                     if (err)
                         throw err;
 
                     // remove shebang
                     data = data.replace(/^#!\/usr\/bin\/env browser\s*$/m, "");
-
                     openBrowserTab({
                         title: basename(args[1]),
                         content: data
                     });
-
                 });
              }
         }, handle);
 
+        // write ~/bin/browser to use in shebang
         var browserPath = "~/bin/browser";
         fs.exists(browserPath, function(exists) {
-            var ver = settings.getNumber("user/cs50/simple/@browser");
+            var ver = settings.getNumber("project/cs50/simple/@browser");
             if (!exists || isNaN(ver) || ver < BROWSER_VER) {
                 fs.writeFile(browserPath, require("text!./bin/browser"), function(err) {
                     if (err)
@@ -131,7 +138,7 @@ define(function(require, exports, module) {
                         if (err)
                             throw err;
 
-                        settings.set("user/cs50/simple/@browser", BROWSER_VER);
+                        settings.set("project/cs50/simple/@browser", BROWSER_VER);
                     });
                 });
             }
@@ -142,11 +149,11 @@ define(function(require, exports, module) {
         });
 
         /**
-         *  Opens files selected in file browser, ensuring phpliteadmin
+         *  Opens files selected in file browser, ensuring browser
          * (re)uses a single tab
          */
         function openSelection(opts) {
-            if (!c9.has(c9.STORAGE))
+            if (!c9.has(c9.STORAGE) || !tree.tree)
                 return;
 
             var sel = tree.tree.selection.getSelectedNodes();
@@ -166,6 +173,7 @@ define(function(require, exports, module) {
 
             // open last selected db file, selecting it back
             if (db) {
+
                 // just focus tab if phpliteadmin is running same db
                 var tab = tabs.findTab("phpliteadmin-tab");
                 if (tab && tab.document.lastState.browser.path === db.path)
@@ -195,9 +203,9 @@ define(function(require, exports, module) {
             // kill phpliteadmin when tab is closed
             tab.on("close", function() {
                 var pid = tab.document.lastState.browser.pid;
-                if (!err && pid)
 
-                    // process.kill isn't available after reload (bug?)
+                // process.kill isn't available after reload (bug?)
+                if (pid)
                     proc.spawn("kill", { args: ["-1", pid ]}, function() {});
             });
         }
@@ -236,8 +244,12 @@ define(function(require, exports, module) {
         }
 
         // hook new handler for Open to open db files
-        tree.tree.off("afterChoose", tree.openSelection);
-        tree.tree.on("afterChoose", openSelection);
+        tree.once("draw", function() {
+            if (tree.tree) {
+                tree.tree.off("afterChoose", tree.openSelection);
+                tree.tree.on("afterChoose", openSelection);
+            }
+        });
 
         function Browser(){
             var plugin = new Editor("CS50", main.consumes, extensions);
@@ -273,6 +285,7 @@ define(function(require, exports, module) {
              */
             function reloadTab(tab) {
                 if (tab === currDoc.tab) {
+
                     // iframe.contentWindow.location.reload violates same-origin
                     if (currSession.url)
                         updateIframe({ url: iframe.src });
@@ -376,11 +389,12 @@ define(function(require, exports, module) {
             });
 
             plugin.on("documentActivate", function(e) {
+
                 // set current document and session
                 currDoc = e.doc;
                 currSession = currDoc.getSession();
 
-                if (currSession.url)
+                if (currSession.url && currSession.url !== iframe.src)
                     updateIframe({ url: currSession.url });
                 else if (currSession.content)
                     updateIframe({ content: currSession.content });
