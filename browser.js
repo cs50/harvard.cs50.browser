@@ -1,7 +1,7 @@
 define(function(require, exports, module) {
     main.consumes = [
         "c9", "commands", "dialog.error", "Editor", "editors", "fs", "layout",
-        "MenuItem", "menus", "tabManager", "proc", "settings", "tree"
+        "MenuItem", "menus", "tabManager", "proc", "settings", "tree", "ui"
     ];
     main.provides = ["harvard.cs50.browser"];
     return main;
@@ -20,6 +20,7 @@ define(function(require, exports, module) {
         var tabs = imports.tabManager;
         var settings = imports.settings;
         var tree = imports.tree;
+        var ui = imports.ui;
 
         var _ = require("lodash");
         var basename = require("path").basename;
@@ -30,6 +31,17 @@ define(function(require, exports, module) {
 
         var extensions = ["db", "db3", "sqlite", "sqlite3"];
         var handle = editors.register("browser", "Browser", Browser, extensions);
+
+        var cssInserted = false;
+        handle.insertCss = function() {
+
+            // ensure CSS is inserted only once
+            if (cssInserted)
+                return;
+
+            cssInserted = true;
+            ui.insertCss(require("text!./style.css"), options.staticPrefix, handle);
+        }
 
         /**
          * adds Reload to tab context menu
@@ -67,6 +79,20 @@ define(function(require, exports, module) {
                 else
                     handle.reloadItem.hide();
             });
+        };
+
+        /**
+         * Toggles loading spinner
+         */
+        handle.toggleLoadingSpinner = function(container, tab, visible) {
+            if (visible) {
+                tab.classList.add("loading");
+                container.classList.add("cs50-browser-loading");
+            }
+            else {
+                tab.classList.remove("loading");
+                container.classList.remove("cs50-browser-loading");
+            }
         };
 
         /**
@@ -263,6 +289,9 @@ define(function(require, exports, module) {
             // draw editor
             plugin.on("draw", function(e) {
 
+                // insert css
+                handle.insertCss();
+
                 // add "Reload" menu item to tab button context menu
                 handle.addReloadItem();
 
@@ -307,7 +336,8 @@ define(function(require, exports, module) {
                 if (options) {
 
                     // show loading spinner
-                    currDoc.tab.classList.add("loading");
+                    handle.toggleLoadingSpinner(container, currDoc.tab, true);
+
                     loading = true;
                     iframe.onload = function () {
 
@@ -329,8 +359,8 @@ define(function(require, exports, module) {
                         // show iframe back
                         iframe.style.display = "initial";
 
-                        // hide loading spinner from tab button
-                        currDoc.tab.classList.remove("loading");
+                        // hide loading spinner
+                        handle.toggleLoadingSpinner(container, currDoc.tab, false);
                         loading = false;
                     }
                 }
@@ -369,6 +399,7 @@ define(function(require, exports, module) {
 
                         // change tab-button colors
                         container.style.backgroundColor = tab.backgroundColor = "#303130";
+                        container.classList.add("dark");
                         tab.classList.add("dark");
                     }
 
@@ -377,6 +408,7 @@ define(function(require, exports, module) {
 
                         // change tab-button colors
                         container.style.backgroundColor = tab.backgroundColor = "#f1f1f1";
+                        container.classList.remove("dark");
                         tab.classList.remove("dark");
                     }
                 }
@@ -433,6 +465,11 @@ define(function(require, exports, module) {
 
                 // handle database files
                 else {
+
+                    // show loading spinner
+                    handle.toggleLoadingSpinner(container, currDoc.tab, true);
+
+                    // start phpliteadmin
                     startPhpliteadmin(currSession.path, function(err, url, pid) {
                         if (err)
                             return console.error(err);
