@@ -480,8 +480,12 @@ define(function(require, exports, module) {
                         // set or update phpliteadmin pid
                         currSession.pid = pid;
 
-                        // notify about url change
-                        emit("urlSet", url);
+                        // give chance to server to start
+                        setTimeout(function() {
+
+                            // notify about url change
+                            emit("urlSet", url);
+                        }, 1000);
                     });
                 }
             });
