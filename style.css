@@ -1,15 +1,15 @@
 /* preload images */
 body:after {
-    content: url("@{image-path}/loading.gif") url("@{image-path}/loading-dark.gif");
+    content: url("@{plugin-path}/loading.gif") url("@{plugin-path}/loading-dark.gif");
     display:none;
 }
 
 .cs50-browser-loading {
-    background-image:  url("@{image-path}/loading.gif");
+    background-image:  url("@{plugin-path}/loading.gif");
     background-position: center;
     background-repeat: no-repeat;
 }
 
 .cs50-browser-loading.dark {
-    background-image:  url("@{image-path}/loading-dark.gif");
+    background-image:  url("@{plugin-path}/loading-dark.gif");
 }
