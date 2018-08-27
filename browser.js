@@ -208,7 +208,7 @@ define(function(require, exports, module) {
                 openBrowserTab({
                     name: "phpliteadmin-tab",
                     title: "phpliteadmin",
-                    path: db.path.replace(/^\//, c9.workspaceDir + "/")
+                    path: db.path.replace(/^\//, c9.environmentDir + "/")
                 }, handleTabClose);
 
                 tree.tree.selection.selectNode(db, true);
