@@ -1,41 +1,41 @@
 define(function(require, exports, module) {
     main.consumes = [
-        "c9", "commands", "dialog.error", "Editor", "editors", "fs", "layout",
+        "c9", "commands", "Editor", "editors", "fs", "layout",
         "MenuItem", "menus", "tabManager", "proc", "settings", "tree", "ui"
     ];
+
     main.provides = ["harvard.cs50.browser"];
     return main;
 
     function main(options, imports, register) {
-        var c9 = imports.c9;
-        var commands = imports.commands;
-        var Editor = imports.Editor;
-        var editors = imports.editors;
-        var fs = imports.fs;
-        var layout = imports.layout;
-        var MenuItem = imports.MenuItem;
-        var menus = imports.menus;
-        var proc = imports.proc;
-        var showError = imports["dialog.error"].show;
-        var tabs = imports.tabManager;
-        var settings = imports.settings;
-        var tree = imports.tree;
-        var ui = imports.ui;
+        const c9 = imports.c9;
+        const commands = imports.commands;
+        const Editor = imports.Editor;
+        const editors = imports.editors;
+        const fs = imports.fs;
+        const layout = imports.layout;
+        const MenuItem = imports.MenuItem;
+        const menus = imports.menus;
+        const proc = imports.proc;
+        const tabs = imports.tabManager;
+        const settings = imports.settings;
+        const tree = imports.tree;
+        const ui = imports.ui;
 
-        var _ = require("lodash");
-        var basename = require("path").basename;
-        var extname = require("path").extname;
-        var join = require("path").join;
+        const _ = require("lodash");
+        const basename = require("path").basename;
+        const extname = require("path").extname;
+        const join = require("path").join;
 
-        var BROWSER_VER = 1;
+        const BROWSER_VER = 1;
 
-        var extensions = ["db", "db3", "sqlite", "sqlite3"];
-        var handle = editors.register("browser", "Browser", Browser, extensions);
+        const extensions = ["db", "db3", "sqlite", "sqlite3"];
+        const handle = editors.register("browser", "Browser", Browser, extensions);
 
-        var cssInserted = false;
-        handle.insertCss = function() {
+        let cssInserted = false;
+        handle.insertCss = () => {
 
-            // ensure CSS is inserted only once
+            // Ensure CSS is inserted only once
             if (cssInserted)
                 return;
 
@@ -46,34 +46,34 @@ define(function(require, exports, module) {
         /**
          * adds Reload to tab context menu
          */
-        handle.addReloadItem = function() {
+        handle.addReloadItem = () => {
 
-            // add "Reload" item once
+            // Add "Reload" item once
             if (handle.reloadAdded)
                 return;
 
-            // context menu of tab button
+            // Context menu of tab button
             handle.tabMenu = menus.get("context/tabs").menu;
             if (!handle.tabMenu)
                 return;
 
-            // create "Reload" item
+            // Create "Reload" item
             handle.reloadItem = new MenuItem({
                 caption: "Reload",
-                onclick: function() {
-                    var tab = tabs.focussedTab;
+                onclick: () => {
+                    const tab = tabs.focussedTab;
                     if (tab.editorType === "browser")
                         tab.editor.reloadTab(tab);
                 },
                 visible: false
             });
 
-            // add "Reload" item to context menu
+            // Add "Reload" item to context menu
             menus.addItemByPath("context/tabs/Reload", handle.reloadItem, 0, handle);
             handle.reloadAdded = true;
 
-            // show "Reload" item only if tab is browser
-            handle.tabMenu.on("prop.visible", function(e) {
+            // Show "Reload" item only if tab is browser
+            handle.tabMenu.on("prop.visible", e => {
                 if (tabs.focussedTab.editorType === "browser" && e.value)
                     handle.reloadItem.show();
                 else
@@ -84,7 +84,7 @@ define(function(require, exports, module) {
         /**
          * Toggles loading spinner
          */
-        handle.toggleLoadingSpinner = function(container, tab, visible) {
+        handle.toggleLoadingSpinner = (container, tab, visible) => {
             if (visible) {
                 tab.classList.add("loading");
                 container.classList.add("cs50-browser-loading");
@@ -99,33 +99,36 @@ define(function(require, exports, module) {
          * opens and reuses a Cloud9 tab for browser editor
          */
         function openBrowserTab(options, onClose) {
-            tabs.open({
-                name: options.name || "browser-tab",
-                document: {
-                    title: options.title || "browser",
-                    browser: {
-                        content: options.content,
-                        path: options.path
-                    }
+            tabs.open(
+                {
+                    name: options.name || "browser-tab",
+                    document: {
+                        title: options.title || "browser",
+                        browser: {
+                            content: options.content,
+                            path: options.path
+                        }
+                    },
+                    editorType: "browser",
+                    active: true,
+                    focus: true,
                 },
-                editorType: "browser",
-                active: true,
-                focus: true,
-            }, onClose || function() {});
+                onClose || (() => {})
+            );
         }
 
-        // add c9 exec browser
+        // Add c9 exec browser
         commands.addCommand({
             name: "browser",
-            exec: function(args) {
+            exec(args) {
                 if (!_.isArray(args) || args.length !== 2 || !_.isString(args[1]))
                     return console.error("Usage: c9 exec browser path");
 
-                // open phpliteadmin tab for database files
+                // Open phpliteadmin tab for database files
                 if (extensions.indexOf(extname(args[1]).substring(1)) > -1) {
 
-                    // join cwd and path only if path is relative
-                    var path = args[1].startsWith("/")
+                    // Join cwd and path only if path is relative
+                    const path = args[1].startsWith("/")
                         ? args[1]
                         : join(args[0], args[1]);
 
@@ -136,12 +139,12 @@ define(function(require, exports, module) {
                     }, handleTabClose);
                 }
 
-                // open SPL programs in built-in browser tab
-                fs.readFile(args[1], function(err, data) {
+                // Open SPL programs in built-in browser tab
+                fs.readFile(args[1], (err, data) => {
                     if (err)
                         throw err;
 
-                    // remove shebang
+                    // Remove shebang
                     data = data.replace(/^#!\/usr\/bin\/env browser\s*$/m, "");
                     openBrowserTab({
                         title: basename(args[1]),
@@ -151,16 +154,16 @@ define(function(require, exports, module) {
              }
         }, handle);
 
-        // write ~/bin/browser to use in shebang
-        var browserPath = "~/bin/browser";
-        fs.exists(browserPath, function(exists) {
-            var ver = settings.getNumber("project/cs50/simple/@browser");
+        // Write ~/bin/browser to use in shebang
+        const browserPath = "~/bin/browser";
+        fs.exists(browserPath, exists => {
+            const ver = settings.getNumber("project/cs50/simple/@browser");
             if (!exists || isNaN(ver) || ver < BROWSER_VER) {
-                fs.writeFile(browserPath, require("text!./bin/browser"), function(err) {
+                fs.writeFile(browserPath, require("text!./bin/browser"), err => {
                     if (err)
                         throw err;
 
-                    fs.chmod(browserPath, 755, function(err) {
+                    fs.chmod(browserPath, 755, err => {
                         if (err)
                             throw err;
 
@@ -182,26 +185,26 @@ define(function(require, exports, module) {
             if (!c9.has(c9.STORAGE) || !tree.tree)
                 return;
 
-            var sel = tree.tree.selection.getSelectedNodes();
-            var db = null;
+            const sel = tree.tree.selection.getSelectedNodes();
+            let db = null;
 
-            // get last selected db file, deselecting all db files temporarily
-            sel.forEach(function(node) {
+            // Get last selected db file, deselecting all db files temporarily
+            sel.forEach(node => {
                 if (node && node.path && extensions.indexOf(extname(node.path).substring(1)) > -1) {
                     db = node;
                     tree.tree.selection.unselectNode(db);
                 }
             });
 
-            // open non-db selected files (if any)
+            // Open non-db selected files (if any)
             if (sel.length > 0)
                 tree.openSelection(opts);
 
-            // open last selected db file, selecting it back
+            // Open last selected db file, selecting it back
             if (db) {
 
-                // just focus tab if phpliteadmin is running same db
-                var tab = tabs.findTab("phpliteadmin-tab");
+                // Just focus tab if phpliteadmin is running same db
+                const tab = tabs.findTab("phpliteadmin-tab");
                 if (tab && tab.document.lastState.browser.path === db.path)
                     return tabs.focusTab(tab);
 
@@ -223,16 +226,16 @@ define(function(require, exports, module) {
             if (err)
                 return console.error(err);
 
-            // ensure handler hooked once
+            // Ensure handler hooked once
             tab.off("close", handleTabClose);
 
-            // kill phpliteadmin when tab is closed
-            tab.on("close", function() {
-                var pid = tab.document.lastState.browser.pid;
+            // Kill phpliteadmin when tab is closed
+            tab.on("close", () => {
+                const pid = tab.document.lastState.browser.pid;
 
                 // process.kill isn't available after reload (bug?)
                 if (pid)
-                    proc.spawn("kill", { args: ["-1", pid ]}, function() {});
+                    proc.spawn("kill", { args: ["-1", pid ]}, () => {});
             });
         }
 
@@ -245,22 +248,22 @@ define(function(require, exports, module) {
             if (!path)
                 return;
 
-            // spawn phpliteadmin
+            // Spawn phpliteadmin
             proc.spawn("phpliteadmin", {
                 args: [ "--url-only", path ] },
-                function(err, process) {
+                (err, process) => {
                 if (err)
                     return callback(err);
 
-                // keep running after reload
+                // Keep running after reload
                 process.unref();
 
-                // get phpliteadmin url
-                var data = "";
+                // Get phpliteadmin url
+                let data = "";
                 process.stdout.on("data", function handleOutput(chunk) {
                     data += chunk;
 
-                    var matches = data.match(/(https?:\/\/.+)\s/);
+                    const matches = data.match(/(https?:\/\/.+)\s/);
                     if (matches && matches[1]) {
                         process.stdout.off("data", handleOutput);
                         callback(null, matches[1], process.pid);
@@ -269,8 +272,8 @@ define(function(require, exports, module) {
             });
         }
 
-        // hook new handler for Open to open db files
-        tree.once("draw", function() {
+        // Hook new handler for Open to open db files
+        tree.once("draw", () => {
             if (tree.tree) {
                 tree.tree.off("afterChoose", tree.openSelection);
                 tree.tree.on("afterChoose", openSelection);
@@ -278,33 +281,33 @@ define(function(require, exports, module) {
         });
 
         function Browser(){
-            var plugin = new Editor("CS50", main.consumes, extensions);
-            var emit = plugin.getEmitter();
+            const plugin = new Editor("CS50", main.consumes, extensions);
+            const emit = plugin.getEmitter();
 
-            var container, iframe;
-            var currDoc, currSession;
-            var timeout;
+            let container, iframe;
+            let currDoc, currSession;
+            let timeout;
 
-            // draw editor
-            plugin.on("draw", function(e) {
+            // Draw editor
+            plugin.on("draw", (e) => {
 
-                // insert css
+                // Insert css
                 handle.insertCss();
 
-                // add "Reload" menu item to tab button context menu
+                // Add "Reload" menu item to tab button context menu
                 handle.addReloadItem();
 
-                // create and style iframe
+                // Create and style iframe
                 iframe = document.createElement("iframe");
                 iframe.style.background = "white";
                 iframe.style.borderWidth = "0";
                 iframe.style.display = "none";
                 iframe.style.width = iframe.style.height = "100%";
 
-                // remember container
+                // Remember container
                 container = e.htmlNode;
 
-                // append iframe
+                // Append iframe
                 container.appendChild(iframe);
             });
 
@@ -324,33 +327,33 @@ define(function(require, exports, module) {
 
             function updateIframe(options) {
 
-                // reset onload handler
-                iframe.onload = function() {};
+                // Reset onload handler
+                iframe.onload = () => {};
 
-                // reset iframe src
+                // Reset iframe src
                 iframe.src = "about:blank";
 
-                // hide iframe
+                // Hide iframe
                 iframe.style.display = "none";
 
                 if (!options)
                     return;
 
-                // show loading spinner
+                // Show loading spinner
                 handle.toggleLoadingSpinner(container, currDoc.tab, true);
 
-                // if url provided
+                // If url provided
                 if (options.url) {
                     currSession.url = options.url;
                     iframe.src = options.url;
                 }
 
-                iframe.onload = function () {
+                iframe.onload = () => {
 
-                    // avoid triggering this infinitely
-                    iframe.onload = function() {};
+                    // Avoid triggering this infinitely
+                    iframe.onload = () => {};
 
-                    // if SPL program
+                    // If SPL program
                     if (options.content) {
                         currSession.content = options.content;
                         iframe.contentWindow.document.open();
@@ -358,25 +361,25 @@ define(function(require, exports, module) {
                         iframe.contentWindow.document.close();
                     }
 
-                    // show iframe back
+                    // Show iframe back
                     iframe.style.display = "initial";
 
-                    // hide loading spinner
+                    // Hide loading spinner
                     handle.toggleLoadingSpinner(container, currDoc.tab, false);
                 }
             }
 
-            plugin.on("documentLoad", function(e) {
+            plugin.on("documentLoad", e => {
 
-                // reset iframe
+                // Reset iframe
                 updateIframe();
 
-                // set current document and session
+                // Set current document and session
                 currDoc = e.doc;
                 currSession = currDoc.getSession();
 
-                // when content should be written to iframe
-                plugin.on("contentSet", function(content) {
+                // When content should be written to iframe
+                plugin.on("contentSet", content => {
                     updateIframe({ content: content })
                 });
 
@@ -387,38 +390,38 @@ define(function(require, exports, module) {
                     if (!currDoc)
                         return;
 
-                    // get document's tab
-                    var tab = currDoc.tab;
+                    // Get document's tab
+                    const tab = currDoc.tab;
 
-                    // handle dark themes
+                    // Handle dark themes
                     if (e.theme.indexOf("dark") > -1) {
 
-                        // change tab-button colors
+                        // Change tab-button colors
                         container.style.backgroundColor = tab.backgroundColor = "#303130";
                         container.classList.add("dark");
                         tab.classList.add("dark");
                     }
 
-                    // handle light themes
+                    // Handle light themes
                     else {
 
-                        // change tab-button colors
+                        // Change tab-button colors
                         container.style.backgroundColor = tab.backgroundColor = "#f1f1f1";
                         container.classList.remove("dark");
                         tab.classList.remove("dark");
                     }
                 }
 
-                // toggle editor's theme when theme changes
+                // Toggle editor's theme when theme changes
                 layout.on("themeChange", setTheme, currSession);
 
-                // set editor's theme initially
+                // Set editor's theme initially
                 setTheme({ theme: settings.get("user/general/@skin") });
             });
 
-            plugin.on("documentActivate", function(e) {
+            plugin.on("documentActivate", e => {
 
-                // set current document and session
+                // Set current document and session
                 currDoc = e.doc;
                 currSession = currDoc.getSession();
 
@@ -428,70 +431,70 @@ define(function(require, exports, module) {
                     updateIframe({ content: currSession.content });
             });
 
-            // when path changes
-            plugin.on("setState", function(e) {
+            // When path changes
+            plugin.on("setState", (e) => {
 
-                // reset and hide iframe
+                // Reset and hide iframe
                 updateIframe();
 
-                // update current document and session
+                // Update current document and session
                 currDoc = e.doc;
                 currSession = currDoc.getSession();
 
-                // set or update current db path
+                // Set or update current db path
                 currSession.path = e.state.path;
 
-                // set or update current phpliteadmin pid
+                // Set or update current phpliteadmin pid
                 if (e.state.pid) {
                     currSession.pid = e.state.pid;
                     handleTabClose(null, currDoc.tab);
                 }
 
-                // if phpliteadmin is already running, use url
+                // If phpliteadmin is already running, use url
                 if (e.state.url) {
                     currSession.url = e.state.url;
                     updateIframe({ url: currSession.url });
                 }
 
-                // handle SDL programs
+                // Handle SDL programs
                 else if (e.state.content) {
                     currSession.content = e.state.content;
                     emit("contentSet", currSession.content);
                 }
 
-                // handle database files
+                // Handle database files
                 else {
 
-                    // show loading spinner
+                    // Show loading spinner
                     handle.toggleLoadingSpinner(container, currDoc.tab, true);
 
-                    // refrain from updating iframe if we're starting another phpliteadmin
+                    // Refrain from updating iframe if we're starting another phpliteadmin
                     clearTimeout(timeout);
                     updateIframe();
 
-                    // start phpliteadmin
-                    startPhpliteadmin(currSession.path, function(err, url, pid) {
+                    // Start phpliteadmin
+                    startPhpliteadmin(currSession.path, (err, url, pid) => {
                         if (err)
                             return console.error(err);
 
-                        // set or update session's url
+                        // Set or update session's url
                         currSession.url = url;
 
-                        // set or update phpliteadmin pid
+                        // Set or update phpliteadmin pid
                         currSession.pid = pid;
 
-                        // give chance to server to start
-                        timeout = setTimeout(function() {
+                        // Give chance to server to start
+                        timeout = setTimeout(() => {
 
-                            // reset iframe
+                            // Reset iframe
                             updateIframe({ url: url });
                         }, 1000);
                     });
                 }
             });
 
-            // remember state between reloads
-            plugin.on("getState", function(e) {
+            // Remember state between reloads
+            plugin.on("getState", e => {
                 e.state.content = e.doc.getSession().content;
                 e.state.path = e.doc.getSession().path;
                 e.state.pid = e.doc.getSession().pid;
