@@ -430,6 +430,23 @@ define(function(require, exports, module) {
 
             // when path changes
             plugin.on("setState", function(e) {
+                function handler(err, url, pid) {
+                    if (err)
+                        return console.error(err);
+
+                    // set or update session's url
+                    currSession.url = url;
+
+                    // set or update phpliteadmin pid
+                    currSession.pid = pid;
+
+                    // give chance to server to start
+                    timeout = setTimeout(function() {
+
+                        // reset iframe
+                        updateIframe({ url: url });
+                    }, 1000);
+                }
 
                 // reset and hide iframe
                 updateIframe();
@@ -449,8 +466,15 @@ define(function(require, exports, module) {
 
                 // if phpliteadmin is already running, use url
                 if (e.state.url) {
-                    currSession.url = e.state.url;
-                    updateIframe({ url: currSession.url });
+                    // restart phpliteadmin process if no longer running
+                    // process is killed after workspace is restarted
+                    proc.execFile("kill", { args: ["-0", currSession.pid]}, (err) => {
+                        if (err)
+                            return startPhpliteadmin(currSession.path, handler);
+
+                        currSession.url = e.state.url;
+                        updateIframe({ url: currSession.url });
+                    });
                 }
 
                 // handle SDL programs
@@ -470,23 +494,7 @@ define(function(require, exports, module) {
                     updateIframe();
 
                     // start phpliteadmin
-                    startPhpliteadmin(currSession.path, function(err, url, pid) {
-                        if (err)
-                            return console.error(err);
-
-                        // set or update session's url
-                        currSession.url = url;
-
-                        // set or update phpliteadmin pid
-                        currSession.pid = pid;
-
-                        // give chance to server to start
-                        timeout = setTimeout(function() {
-
-                            // reset iframe
-                            updateIframe({ url: url });
-                        }, 1000);
-                    });
+                    startPhpliteadmin(currSession.path, handler);
                 }
             });
 
