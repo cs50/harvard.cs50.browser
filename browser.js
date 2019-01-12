@@ -117,61 +117,6 @@ define(function(require, exports, module) {
             );
         }
 
-        // Add c9 exec browser
-        commands.addCommand({
-            name: "browser",
-            exec(args) {
-                if (!_.isArray(args) || args.length !== 2 || !_.isString(args[1]))
-                    return console.error("Usage: c9 exec browser path");
-
-                // Open phpliteadmin tab for database files
-                if (extensions.indexOf(extname(args[1]).substring(1)) > -1) {
-
-                    // Join cwd and path only if path is relative
-                    const path = args[1].startsWith("/")
-                        ? args[1]
-                        : join(args[0], args[1]);
-
-                    return openBrowserTab({
-                        name: "phpliteadmin-tab",
-                        title: "phpliteadmin",
-                        path: path
-                    }, handleTabClose);
-                }
-
-                // Open SPL programs in built-in browser tab
-                fs.readFile(args[1], (err, data) => {
-                    if (err)
-                        throw err;
-
-                    // Remove shebang
-                    data = data.replace(/^#!\/usr\/bin\/env browser\s*$/m, "");
-                    openBrowserTab({
-                        title: basename(args[1]),
-                        content: data
-                    });
-                });
-             }
-        }, handle);
-
-        // Write ~/bin/browser to use in shebang
-        const browserPath = "~/bin/browser";
-        fs.exists(browserPath, exists => {
-            const ver = settings.getNumber("project/cs50/simple/@browser");
-            if (!exists || isNaN(ver) || ver < BROWSER_VER) {
-                fs.writeFile(browserPath, require("text!./bin/browser"), err => {
-                    if (err)
-                        throw err;
-
-                    fs.chmod(browserPath, 755, err => {
-                        if (err)
-                            throw err;
-
-                        settings.set("project/cs50/simple/@browser", BROWSER_VER);
-                    });
-                });
-            }
-        });
 
         register(null, {
             "harvard.cs50.browser": handle
