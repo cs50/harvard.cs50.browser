@@ -18,6 +18,20 @@ define(function(require, exports, module) {
 
         const plugin = new Plugin("CS50", main.consumes);
 
+        function addWebServer() {
+            menus.addItemByPath("AWS Cloud9/Web Server", new ui.item({
+                id: "web_server",
+                caption: "Web Server",
+                onclick() {
+                    if (c9.hostname)
+                        window.open(c9.hostname);
+                    else
+                        console.error("hostname is not set");
+                }
+            }), 102, plugin);
+        }
+
+
         function addServe() {
             tree.getElement("mnuCtxTree", mnuCtxTree => {
 
@@ -90,6 +104,7 @@ define(function(require, exports, module) {
 
             loaded = true;
             addServe();
+            addWebServer();
         });
 
         plugin.on("unload", () => {});
