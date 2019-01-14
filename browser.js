@@ -22,7 +22,6 @@ define(function(require, exports, module) {
         const tree = imports.tree;
         const ui = imports.ui;
 
-        const _ = require("lodash");
         const basename = require("path").basename;
         const extname = require("path").extname;
         const join = require("path").join;
