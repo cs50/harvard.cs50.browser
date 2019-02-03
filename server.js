@@ -49,7 +49,7 @@ define(function(require, exports, module) {
                         }).length === 1;
                     },
                     onclick() {
-                        const node = tree.selectedNodes.find(function(node) {
+                        const node = tree.selectedNodes.find(node => {
                             return node.isFolder;
                         });
 
@@ -72,7 +72,7 @@ define(function(require, exports, module) {
                         // spawn http-server
                         // alias isn't seen by subshell
                         const PORT = "8081";
-                        proc.spawn("/home/ubuntu/.cs50/bin/http-server", {
+                        proc.spawn("http-server", {
                             args: [ "-p", PORT ],
                             cwd: path
                         },
@@ -88,7 +88,7 @@ define(function(require, exports, module) {
                             });
 
                             setTimeout(() => {
-                                // tab.location.href = info50.host.replace(/:[0-9]+$/, ":" + PORT);
+                                tab.location.href = `${c9.hostname}:${PORT}`;
                             },
                             1000);
                         });
