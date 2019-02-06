@@ -88,7 +88,7 @@ define(function(require, exports, module) {
                             });
 
                             setTimeout(() => {
-                                tab.location.href = `${c9.hostname}:${PORT}`;
+                                tab.location.href = `http://${c9.hostname}:${PORT}`;
                             },
                             1000);
                         });
