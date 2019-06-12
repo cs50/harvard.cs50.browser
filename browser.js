@@ -39,7 +39,7 @@ define(function(require, exports, module) {
                 return;
 
             cssInserted = true;
-            ui.insertCss(require("text!./style.css"), options.staticPrefix, handle);
+            ui.insertCss(require("text!./style.css"), handle);
         }
 
         /**
