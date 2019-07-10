@@ -24,7 +24,7 @@ define(function(require, exports, module) {
                 caption: "Web Server",
                 onclick() {
                     if (c9.hostname)
-                        window.open(`http://${c9.hostname}`);
+                        window.open(`//${c9.hostname}`);
                     else
                         console.error("hostname is not set");
                 }
@@ -88,7 +88,7 @@ define(function(require, exports, module) {
                             });
 
                             setTimeout(() => {
-                                tab.location.href = `http://${c9.hostname}:${PORT}`;
+                                tab.location.href = `//${c9.hostname}:${PORT}`;
                             },
                             1000);
                         });
