@@ -59,16 +59,6 @@ define(function(require, exports, module) {
                         // path for selected directory
                         const path = node.path.replace(/^\//, c9.environmentDir + "/");
 
-                        // open new browser tab
-                        const tab = window.open("", "_blank");
-                        if (!tab)
-                            return;
-
-                        tab.document.write(
-                            'Starting http-server...<br>' +
-                            'Please wait! This page will reload automatically.'
-                        );
-
                         // spawn http-server
                         // alias isn't seen by subshell
                         const PORT = "8081";
@@ -78,19 +68,31 @@ define(function(require, exports, module) {
                         },
                         (err, process) => {
                             if (err) {
-                                // showError("Could not start http-server");
-                                tab.document.write("Could not start http-server.");
                                 return console.error(err);
                             }
 
-                            process.stderr.on("data", chunk => {
-                                console.log(chunk);
-                            });
+                            process.stderr.on("data", (data) => console.log(data))
+                            const URL = `//${c9.hostname}:${PORT}`
+                            async function checkResponse(retries) {
+                                if (retries < 1) {
+                                    console.error(`${URL} did not return a success code`)
+                                    return
+                                }
 
-                            setTimeout(() => {
-                                tab.location.href = `//${c9.hostname}:${PORT}`;
-                            },
-                            1000);
+                                try {
+                                    const response = await fetch(URL)
+                                    if (response.status === 200)
+                                        return window.open(URL)
+                                }
+                                catch (err) {
+                                    console.error(err)
+                                }
+
+                                await new Promise((resolve) => setTimeout(resolve, 500))
+                                return checkResponse(retries - 1)
+                            }
+
+                            checkResponse(10)
                         });
                     }
                 }), 102, plugin);
