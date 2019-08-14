@@ -5,7 +5,7 @@ define(function(require, exports, module) {
         "commands", "Plugin", "notificationBubble"
     ];
 
-    main.provides = ["harvard.cs50.checkresults"];
+    main.provides = ["harvard.cs50.results"];
     return main;
 
     function main(options, imports, register) {
@@ -43,7 +43,6 @@ define(function(require, exports, module) {
                                 "span",
                                 ` to view detailed ${args[1]} results!`
                             ]
-                            // `<span>Click <button onclick="()=>{ window.open('', '_blank').document.write('${args[2]}') }">here</button> to view detailed ${args[1]}  results!</span>`
                         ]
                     )
                 }
@@ -53,6 +52,6 @@ define(function(require, exports, module) {
 
         plugin.on("unload", () => {});
         plugin.freezePublicAPI({});
-        register(null, { "harvard.cs50.checkresults" : plugin });
+        register(null, { "harvard.cs50.results" : plugin });
     }
 });
