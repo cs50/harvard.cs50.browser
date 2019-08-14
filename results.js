@@ -5,7 +5,7 @@ define(function(require, exports, module) {
         "commands", "Plugin", "notificationBubble"
     ];
 
-    main.provides = ["harvard.cs50.checkresults"];
+    main.provides = ["harvard.cs50.results"];
     return main;
 
     function main(options, imports, register) {
@@ -21,11 +21,11 @@ define(function(require, exports, module) {
 
             loaded = true;
             commands.addCommand({
-                name: "rendercheckresults",
+                name: "renderresults",
                 hint: "Render check results",
                 group: "General",
                 exec: (args) => {
-                    if (args.length !== 2 || typeof args[1] !== "string")
+                    if (args.length !== 3 || typeof args[1] !== "string" || typeof args[2] !== "string")
                         return false;
 
                     bubble.popup(
@@ -34,16 +34,15 @@ define(function(require, exports, module) {
                             [
                                 "a",
                                 {
-                                    href:`javascript:(() => window.open('', '_blank').document.write('${args[1].replace(/'/g, "\\'")}'))()`,
+                                    href:`javascript:(() => window.open('', '_blank').document.write('${args[2].replace(/'/g, "\\'")}'))()`,
                                     "style": "display: inline"
                                 },
                                 "here"
                             ],
                             [
                                 "span",
-                                " to view detailed check50 results!"
+                                ` to view detailed ${args[1]} results!`
                             ]
-                            // `<span>Click <button onclick="()=>{ window.open('', '_blank').document.write('${args[1]}') }">here</button> to view detailed check50 results!</span>`
                         ]
                     )
                 }
@@ -53,6 +52,6 @@ define(function(require, exports, module) {
 
         plugin.on("unload", () => {});
         plugin.freezePublicAPI({});
-        register(null, { "harvard.cs50.checkresults" : plugin });
+        register(null, { "harvard.cs50.results" : plugin });
     }
 });
