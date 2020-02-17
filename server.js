@@ -24,7 +24,7 @@ define(function(require, exports, module) {
                 caption: "Web Server",
                 onclick() {
                     if (c9.hostname)
-                        window.open(`//${c9.hostname}`);
+                        window.open(`//${c9.hostname}:8080`);
                     else
                         console.error("hostname is not set");
                 }
