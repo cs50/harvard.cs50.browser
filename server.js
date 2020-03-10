@@ -23,10 +23,13 @@ define(function(require, exports, module) {
                 id: "web_server",
                 caption: "Web Server",
                 onclick() {
-                    if (c9.hostname)
-                        window.open(`//${c9.hostname}:8080`);
-                    else
+                    if (c9.hostname) {
+                        const parts = c9.hostname.split(".");
+                        window.open(`//${parts[0]}-8080.${parts.slice(1).join(".")}`);
+                    }
+                    else {
                         console.error("hostname is not set");
+                    }
                 }
             }), 102, plugin);
         }
