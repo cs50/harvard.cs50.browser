@@ -35,6 +35,35 @@ define(function(require, exports, module) {
         }
 
 
+        function addGUI() {
+            menus.addItemByPath("AWS Cloud9/GUI", new ui.item({
+                id: "gui50",
+                caption: "GUI",
+                onclick() {
+                    proc.spawn("gui50", (err, p) => {
+                        if (err) {
+                            console.error(err);
+                        }
+                        else {
+                            p.unref();
+
+                            let url = "";
+                            p.stdout.on("data", function handleOutput(chunk) {
+                                url += chunk;
+
+                                if (url.match(/https?:\/\/.+\s/)) {
+                                    console.log(url);
+                                    p.stdout.off("data", handleOutput);
+                                    window.open(url);
+                                }
+                            });
+                        }
+                    });
+                }
+            }), 101, plugin);
+        }
+
+
         function addServe() {
             tree.getElement("mnuCtxTree", mnuCtxTree => {
 
@@ -109,6 +138,7 @@ define(function(require, exports, module) {
 
             loaded = true;
             addServe();
+            addGUI();
             addWebServer();
         });
 
